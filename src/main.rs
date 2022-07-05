@@ -1,4 +1,5 @@
 mod http;
+mod net;
 
 pub(crate) fn main() {
     let mut i = 0;
