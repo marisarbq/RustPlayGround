@@ -1,5 +1,7 @@
 use serde_json::json;
+use std::collections::HashMap;
 
+mod lang;
 //尝试实现一个宏来处理 AVG 演出脚本
 macro_rules! avg {
     ($(@$command:ident $target:ident $($keys:ident=$vals:ident)*)*) => {
