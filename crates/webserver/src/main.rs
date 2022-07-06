@@ -33,7 +33,7 @@ async fn main() {
 fn app() -> Router {
     Router::new()
         .route("/", get(|| async { "服务器在线!" }))
-        .route("/user/:id", get(app_user))
+        .route("/user/:name", get(app_user))
         .route("/get", get(app_get))
         .route("/post", post(app_post))
 }
@@ -42,17 +42,14 @@ fn app() -> Router {
 async fn app_user(
     Query(query): Query<HashMap<String, String>>, //query 和其他语言的web框架是一样的。
     Path(path): Path<String>,                     //获取url路径，也一样
-    Json(payload): Json<Value>,
 ) -> Html<&'static str> {
     print!(
         "
     query: {:#?}
     path: {:#?}
-    payload: {:#?}
     ",
         query,
-        path,
-        json!(payload)
+        path
     );
     Html("<h1>Hello, World!</h1>")
 }
