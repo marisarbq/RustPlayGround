@@ -1,12 +1,12 @@
-use std::fmt::format;
+use std::{fmt::format, sync::Arc};
 
-use reqwasm::websocket::{futures::{WebSocket}, Message};
-use weblog::console_log;
-use yew::prelude::*;
+use reqwasm::websocket::{futures::WebSocket, Message};
+use wasm_bindgen_futures::spawn_local;
+use weblog::{console_log, web_sys::HtmlInputElement};
+use yew::{callback, prelude::*};
 
 // use gloo_net::websocket::{Message, futures::WebSocket};
-use wasm_bindgen_futures::spawn_local;
-use futures::{SinkExt, StreamExt};
+use futures::{executor, SinkExt, StreamExt};
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct ChatProps {
@@ -16,13 +16,14 @@ pub struct ChatProps {
 
 static WS_URL: &str = "ws://39.103.223.49:10009/websocket";
 
-
 #[function_component(Chat)]
 pub fn chat_comp(props: &ChatProps) -> Html {
     let ChatProps { count } = props;
 
     let msg = use_state(|| format!("null"));
-    
+
+    let input = use_state(|| format!("null"));
+
     console_log!("dida1");
 
     let ws = WebSocket::open(WS_URL).unwrap();
@@ -40,6 +41,44 @@ pub fn chat_comp(props: &ChatProps) -> Html {
             .unwrap();
     });
 
+    // {
+    //     use_effect_with_deps(
+    //         move |_| {
+    //             spawn_local(async move {
+    //                 * w
+    //                 .send(Message::Text(String::from("test 2")))
+    //                 .await
+    //                 .unwrap();
+    //             });
+    //             || {
+                    
+    //             }
+    //         },
+    //         (),
+    //     );
+    // }
+
+    let onclick = {
+        Callback::from(|_| {
+            console_log!("测试");
+            // executor::block_on(async move {
+            //     write
+            //     .send(Message::Text(String::from("test")))
+            //     .await
+            //     .unwrap();
+            // });
+        })
+    };
+
+    //关于异步：https://learnku.com/articles/45127
+
+    let oninputchange = {
+        Callback::from(|_| {
+            console_log!("dida2");
+            // e.target().value();// ::<HtmlInputElement>().value();
+        })
+    };
+
     spawn_local(async move {
         while let Some(msg) = read.next().await {
             console_log!(format!("1. {:?}", msg))
@@ -49,10 +88,8 @@ pub fn chat_comp(props: &ChatProps) -> Html {
 
     html! {
         <div>
-            <input />
-            <button onclick={Callback::from(|_| {
-                console_log!("Click!");
-            })}>{"发送"}</button>
+            <input onchange={oninputchange} />
+            <button onclick={onclick}>{"发送"}</button>
         </div>
     }
 }
