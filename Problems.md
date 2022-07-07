@@ -60,3 +60,11 @@ https://stackoverflow.com/questions/64022855/how-do-you-install-an-extension-int
 
 ## 关于Rust-analyzer
 https://learnku.com/articles/32052?order_by=vote_count&
+
+## 关于Yew 开发Web
+> 试了下Yew，感觉还是开发体验没有想象那么好，不过静观其变吧。说不定在webgpu有起色对性能有追求的时候会机遇。
+
+## 如果 trunk 运行报错很多内容
+1. 尝试删除 trunk运行目录下的 dist缓存
+2. 删除 工作空间的target构建目录
+3. 检查是否有不支持wasm构建的 rust Cargo。比如 takio 就不支持

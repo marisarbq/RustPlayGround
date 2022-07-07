@@ -20,8 +20,8 @@ async fn main() {
     let addr = true_host.parse().unwrap();
     println!(
         "[服务器已启动]
-        地址:  {}
-        公网:  {}:1000{}",
+        地址:  http://{}/
+        公网:  http://{}:1000{}/",
         addr, HOST, PORT_INDEX
     );
     Server::bind(&addr)
@@ -32,7 +32,8 @@ async fn main() {
 
 fn app() -> Router {
     Router::new()
-        .route("/", get(|| async { "服务器在线!" }))
+        .route("/", get(|| async { Html(include_str!("html/index.html"))
+    }))
         .route("/user/:name", get(app_user))
         .route("/get", get(app_get))
         .route("/post", post(app_post))
@@ -51,7 +52,7 @@ async fn app_user(
         query,
         path
     );
-    Html("<h1>Hello, World!</h1>")
+    Html(include_str!("html/index.html"))
 }
 
 async fn app_get(
