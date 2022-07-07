@@ -68,3 +68,36 @@ https://learnku.com/articles/32052?order_by=vote_count&
 1. 尝试删除 trunk运行目录下的 dist缓存
 2. 删除 工作空间的target构建目录
 3. 检查是否有不支持wasm构建的 rust Cargo。比如 takio 就不支持
+
+
+## Axum跨域问题
+1. Router的 layer上加上一个组件
+```toml
+tower-http = { version = "0.3.0", features = ["cors"] }
+```
+```rust
+use tower_http::cors::CorsLayer;
+
+.layer(
+    // see https://docs.rs/tower-http/latest/tower_http/cors/index.html
+    // for more details
+    //
+    // pay attention that for some request types like posting content-type: application/json
+    // it is required to add ".allow_headers([http::header::CONTENT_TYPE])"
+    // or see this issue https://github.com/tokio-rs/axum/issues/849
+    CorsLayer::new()
+        .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+        .allow_methods([Method::GET]),
+);
+```
+
+## Stream split问题
+添加Cargo包
+```toml
+futures = "0.3.21"
+```
+
+## 多线程安全引用 Arc机制
+https://blog.csdn.net/quicmous/article/details/123053447
+
+https://beachboyy.blog.csdn.net/article/details/113814516?spm=1001.2101.3001.6661.1&utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1-113814516-blog-123053447.pc_relevant_multi_platform_whitelistv2&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1-113814516-blog-123053447.pc_relevant_multi_platform_whitelistv2&utm_relevant_index=1

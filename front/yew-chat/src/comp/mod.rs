@@ -4,6 +4,7 @@ use yew::prelude::*;
 //https://yew.rs/zh-Hans/docs/concepts/function-components/attribute
 //早就说了这玩意比魔法管用多了！
 
+pub mod chat;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct TestClickProps {

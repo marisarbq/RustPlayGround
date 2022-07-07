@@ -1,5 +1,7 @@
 use app::App;
 
+pub use weblog;
+
 mod comp;
 mod app;
 mod services;
