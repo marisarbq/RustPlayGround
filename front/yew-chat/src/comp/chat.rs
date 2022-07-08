@@ -1,7 +1,7 @@
 use std::{rc::Rc, sync::mpsc::sync_channel};
 
 use wasm_bindgen_futures::spawn_local;
-use weblog::{console_log, web_sys::HtmlInputElement};
+use weblog::{console_log, web_sys::{HtmlInputElement, Text}};
 use yew::prelude::*;
 
 use futures::{
@@ -11,11 +11,11 @@ use futures::{
 };
 use reqwasm::websocket::{futures::WebSocket, Message};
 
-#[derive(Clone, PartialEq, Properties)]
-pub struct ChatProps {
-    #[prop_or_default]
-    pub count: i64,
-}
+// #[derive(Clone, PartialEq, Properties)]
+// pub struct ChatProps {
+//     #[prop_or_default]
+//     pub count: i64,
+// }
 
 static WS_URL: &str = "ws://39.103.223.49:10009/websocket";
 
@@ -56,35 +56,53 @@ impl Reducible for ChatState {
 //     }
 // }
 
-struct IOS {
-    write: SplitSink<reqwasm::websocket::futures::WebSocket, Message>
+struct IOHandler {
+    emit: SplitSink<reqwasm::websocket::futures::WebSocket, Message>,
 }
 
 #[function_component(Chat)]
-pub fn chat_comp(props: &ChatProps) -> Html {
+pub fn chat_comp() -> Html {
     let post = use_reducer(|| ChatState {
         msg: format!("null"),
     });
 
-    let (mut tx, mut rx) = sync_channel::<String>(100);
+    let (tx, rx) = sync_channel::<String>(100);
 
+    let history = use_state(|| {
+        let stack = vec![];
+        stack
+    });
 
-    let mut sender = use_mut_ref(|| {
+    let render_history = history.clone();
+
+    let sender = use_mut_ref(|| {
         let io = WebSocket::open(WS_URL).unwrap();
-        let (mut write, mut read) =  io.split();
+        let (write, mut read) = io.split();
 
+        let _his = history.clone();
+        
         spawn_local(async move {
             while let Some(msg) = read.next().await {
-                console_log!(format!("1. {:?}", msg))
+                let mut messages = (*history).clone();
+                match msg {
+                    Ok(str) => {
+                        console_log!(format!("messages:{:#?}", history));
+                        messages.push(format!("{:?}", str));
+                        _his.set(messages);
+                        //关于Rust 局部变量带走的问题
+                        //https://zhuanlan.zhihu.com/p/109285917
+                        // let outstr = format!("{:#?}",msg);
+                    }
+                    Err(err) => {}
+                }
             }
             console_log!("WebSocket Closed")
         });
 
-        IOS {
-            write
-        }
+        IOHandler { emit: write }
     });
 
+    // console_log!(format!("{:#?}", history));
 
     // let ios = sender.borrow_mut();
 
@@ -92,37 +110,17 @@ pub fn chat_comp(props: &ChatProps) -> Html {
     // let mut write = &ios.write;
 
     {
-        let tx_init = tx.clone(); 
-
-
+        let tx_init = tx.clone();
 
         use_effect_with_deps(
             move |_| {
-                // * 卡在一个非常痛苦的问题上了，在yew的Hook当中如何持久化IO
-                // https://stackoverflow.com/questions/67897874/rust-how-to-fix-borrowed-value-does-not-live-long-enough   
+                // * 卡在一个非常痛苦的问题上了, 已经解决了。菜就是原罪
+                // https://stackoverflow.com/questions/67897874/rust-how-to-fix-borrowed-value-does-not-live-long-enough
 
                 spawn_local(async move {
-                    tx_init.send(String::from("init"));
-                    // 看来线程通信这东西我理解的还不够准确。
-                    // while let Ok(msg) = rx.recv() {
-                    //     console_log!("[rxinit]");
-                    //     match opt {
-                    //         Ok(msg) => {
-                    //             console_log!("[rx]",&msg);
-                    //             if msg.is_empty() {
-                    //                 console_log!("[send_rx]",&msg);
-                    //                 write.send(Message::Text(msg)).await;
-                    //             }
-                    //         }
-                    //         Err(err) => {
-                    //             console_log!("[rx_err]",format!("{:#?}",err));
-                    //         }
-                    //     }
-                    //     // In any websocket error, break loop.
-                    // }
+                    let _ = tx_init.send(String::from("init"));
                 });
 
-                
                 || {}
             },
             (),
@@ -132,15 +130,14 @@ pub fn chat_comp(props: &ChatProps) -> Html {
             move |state| {
                 if !(&state.msg.is_empty()) {
                     console_log!("[tx]", &state.msg);
-                    tx.send(String::from(&state.msg));
-                    
+                    let _ = tx.send(String::from(&state.msg));
                     spawn_local(async move {
                         while let Ok(msg) = rx.recv() {
                             console_log!("[rx]", &msg);
                             if !msg.is_empty() {
                                 console_log!("[send_rx]", &msg);
-                                sender.borrow_mut().write.send(Message::Text(msg)).await;
-                            }else {
+                                let _ = sender.borrow_mut().emit.send(Message::Text(msg)).await;
+                            } else {
                                 console_log!("[rx_empty]")
                             }
                         }
@@ -175,8 +172,17 @@ pub fn chat_comp(props: &ChatProps) -> Html {
         })
     };
 
+    let key = render_history.iter().map(|x| {
+        html! {
+            <p>{x}</p>
+        }
+    });
+
     html! {
         <div>
+            <div>
+                {for key}
+            </div>
             <input onchange={onchange} />
             <button onclick={onclick}>{"发送"}</button>
         </div>
