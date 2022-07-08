@@ -31,7 +31,7 @@ async fn websocket(stream: WebSocket, state: Arc<WsState>) {
 
     let mut _rx = state.sender.subscribe();
 
-    println!("{:#?}",state);
+    println!("新用户链接: {:#?}",state.sender);
 
     let _ = state.sender.send(format!("测试channel"));
 
