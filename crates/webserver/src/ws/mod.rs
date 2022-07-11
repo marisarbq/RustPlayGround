@@ -44,8 +44,6 @@ async fn websocket(stream: WebSocket, state: Arc<WsState>) {
             println!("收到消息: {} ", msg);
             // let _ = sender.send(Message::Text(String::from(msg))).await;
             let _ = cn.send(msg);
-
-            
             // let _ = tx.send(Message::Text(msg));
         }
     });
@@ -53,7 +51,7 @@ async fn websocket(stream: WebSocket, state: Arc<WsState>) {
     //这里需要获取所有的rx，用于广播发送信息。
     let _send_task = tokio::spawn(async move {
         while let Ok(msg) = _rx.recv().await {
-            // In any websocket error, break loop.
+            // In any websocket error, break loop. 
             if sender.send(Message::Text(msg)).await.is_err() {
                 break;
             }
